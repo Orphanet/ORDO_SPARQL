@@ -1,1 +1,68 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX uniprotkb: <http://purl.uniprot.org/uniprot/>
+PREFIX taxon: <http://purl.uniprot.org/taxonomy/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX oboInOwl: <http://www.geneontology.org/formats/oboInOwl#>
+PREFIX Orphanet_: <http://www.orpha.net/ORDO/Orphanet_>
+PREFIX ORDO: <http://www.orpha.net/ORDO/>
+
+SELECT DISTINCT ?gene ?symbol ?proteine ?protlabel ?name ?annotation ?text ?uniprotdisease ?geneorpha ?orphasymbol ?orphacode ?orphacodeLabel ?chemblEntry ?chemblid ?chembllabel ?chembltype
+WHERE {
+    # subquery to get ORDO genes symbol. filtering by a specific gene-disease type of relation
+    {
+      SELECT DISTINCT ?geneorpha ?orphasymbol ?orphacode ?orphacodeLabel
+      WHERE {
+        ?geneorpha ORDO:symbol ?orphasymbol .
+        ?geneorpha rdfs:subClassOf ?restriction .
+        ?restriction a owl:Restriction ;
+                     owl:onProperty ?property ;
+                     owl:someValuesFrom ?orphacode .
+        OPTIONAL { ?property rdfs:label ?propertyLabel . }
+        OPTIONAL { ?orphacode rdfs:label ?orphacodeLabel . }
+        FILTER(?property = <http://www.orpha.net/ORDO/Orphanet_317343>)
+      }
+      ORDER BY ?orphasymbol
+      LIMIT 10
+    }
+    
+    BIND (STR(?orphasymbol) AS ?symbol)
+    # call uniprot for each gene symbol we had in ORDO
+    SERVICE <https://sparql.uniprot.org/sparql> {
+        ?proteine a up:Protein ;
+                  up:organism taxon:9606 ;
+                  up:organism ?organisme .
+        
+        ?organisme up:scientificName ?name .
+        ?proteine rdfs:label ?protlabel .
+        
+        ?proteine up:annotation ?annotation .
+        ?annotation a up:Disease_Annotation .
+        ?annotation rdfs:comment ?text .
+        ?annotation up:disease/skos:prefLabel ?uniprotdisease .
+        
+        ?proteine up:encodedBy ?gene .
+        ?gene skos:prefLabel ?symbol .
+        
+        ?proteine rdfs:seeAlso ?chemblEntry .
+        ?chemblEntry up:database <http://purl.uniprot.org/database/ChEMBL> .
+		BIND(?chemblEntry AS ?chemblquery)
+    }
+# call chembl to get more information
+   SERVICE <https://chemblmirror.rdf.bigcat-bioinformatics.org/sparql> {
+       ?chemblEntry <http://rdf.ebi.ac.uk/terms/chembl#chemblId> ?chemblid.
+	   ?chemblEntry <http://rdf.ebi.ac.uk/terms/chembl#targetType> ?chembltype.
+       ?chemblEntry rdfs:label ?chembllabel
+        
+    }         
+}
+ORDER BY ?orphasymbol
+# put a limit for testing purposes
+LIMIT 10
 
