@@ -8,12 +8,15 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX Orphanet_: <http://www.orpha.net/ORDO/Orphanet_#>
 PREFIX ORDO: <http://www.orpha.net/ORDO/>
 
-select ?label ?predicat ?predlabel ?o WHERE {
+select ?label ?predicat ?predlabel ?olabel ?o ?n  ?oflabel
+WHERE {
 ?s ?predicat ?o.
     optional {?predicat rdfs:label ?predlabel}.
     optional {?s rdfs:label ?label}.
-optional {?o ?m ?v.
-?v rdfs:label ?e}.
+    optional {?o rdfs:label ?olabel}.
+    optional {?o ?n ?t .
+    	?t rdfs:label ?oflabel
+    }.
 filter (?s = ORDO:Orphanet_558)
 }
 ORDER BY ?o
