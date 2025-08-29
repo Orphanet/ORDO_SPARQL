@@ -1,0 +1,7 @@
+PREFIX ordo:<http://www.orpha.net/ORDO/>
+PREFIX w3: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?label
+WHERE {
+ordo:Orphanet_10 w3:label ?label
+}
