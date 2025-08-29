@@ -1,1 +1,18 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX ORDO: <http://www.orpha.net/ORDO/>
+PREFIX ordo: <http://www.orpha.net/ORDO/>
+
+SELECT DISTINCT ?class ?symbol ?relation ?label
+WHERE {
+  ?class ORDO:symbol ?symbol .
+
+  ?class rdfs:subClassOf ?restriction .
+  ?restriction a owl:Restriction ;
+               owl:onProperty ?property ;
+               owl:someValuesFrom ?someValue .
+    OPTIONAL {?someValue rdfs:label ?label}.
+    OPTIONAL {?property rdfs:label ?relation}.
+}
 
